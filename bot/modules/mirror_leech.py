@@ -43,9 +43,9 @@ from bot.helper.mirror_utils.download_utils.mega_download import add_mega_downlo
 from bot.helper.mirror_utils.download_utils.rclone_download import add_rclone_download
 from bot.helper.mirror_utils.rclone_utils.list import RcloneList
 from bot.helper.mirror_utils.upload_utils.gdriveTools import GoogleDriveHelper
-from bot.helper.mirror_utils.download_utils.direct_link_generator import (
-    direct_link_generator,
-)
+#from bot.helper.mirror_utils.download_utils.direct_link_generator import (
+#    direct_link_generator,
+#)
 from bot.helper.mirror_utils.download_utils.telegram_download import (
     TelegramDownloadHelper,
 )
@@ -357,7 +357,8 @@ async def _mirror_leech(
             try:
                 if not is_magnet(link) and (ussr or pssw):
                     link = (link, (ussr, pssw))
-                link = await sync_to_async(direct_link_generator, link)
+                #link = await sync_to_async(direct_link_generator, link)
+                link = ""
                 if isinstance(link, tuple):
                     link, headers = link
                 elif isinstance(link, str):
@@ -513,7 +514,7 @@ async def _mirror_leech(
         await add_gd_download(link, path, listener, name, org_link)
     elif is_mega_link(link):
         await delete_links(message)
-        await add_mega_download(link, f"{path}/", listener, name)
+        #await add_mega_download(link, f"{path}/", listener, name)
     elif isQbit and "real-debrid" not in link:
         await add_qb_torrent(link, path, listener, ratio, seed_time)
     elif not is_telegram_link(link):
