@@ -60,7 +60,7 @@ from .helper.listeners.aria2_listener import start_aria2_listener
 from .helper.themes import BotTheme
 from .modules import (
     authorize,
-    clone,
+    #clone,
     gd_count,
     gd_delete,
     gd_list,
