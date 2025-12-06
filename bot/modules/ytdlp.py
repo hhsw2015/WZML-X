@@ -555,6 +555,13 @@ async def _ytdl(client, message, isLeech=False, sameDir=None, bulk=[]):
         name, link = await _mdisk(link, name)
 
     options = {"usenetrc": True, "cookiefile": "cookies.txt"}
+
+    options['extractor_args'] = {
+        'youtubepot-bgutilhttp': {
+            'base_url': 'http://127.0.0.1:4416'
+        }
+    }
+    
     if opt:
         yt_opt = opt.split("|")
         for ytopt in yt_opt:
