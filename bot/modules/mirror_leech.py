@@ -39,7 +39,7 @@ from bot.helper.ext_utils.task_manager import task_utils
 from bot.helper.mirror_utils.download_utils.aria2_download import add_aria2c_download
 from bot.helper.mirror_utils.download_utils.gd_download import add_gd_download
 from bot.helper.mirror_utils.download_utils.qbit_download import add_qb_torrent
-from bot.helper.mirror_utils.download_utils.mega_download import add_mega_download
+#from bot.helper.mirror_utils.download_utils.mega_download import add_mega_download
 from bot.helper.mirror_utils.download_utils.rclone_download import add_rclone_download
 from bot.helper.mirror_utils.rclone_utils.list import RcloneList
 from bot.helper.mirror_utils.upload_utils.gdriveTools import GoogleDriveHelper
