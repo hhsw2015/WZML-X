@@ -562,6 +562,7 @@ async def _ytdl(client, message, isLeech=False, sameDir=None, bulk=[]):
         }
     }
     if "youtube" not in link:
+        options['proxy'] = ""
         options['external_downloader'] = "aria2c"
         options['external_downloader_args'] = {
             'aria2c': [
