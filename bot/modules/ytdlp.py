@@ -561,6 +561,16 @@ async def _ytdl(client, message, isLeech=False, sameDir=None, bulk=[]):
             'base_url': 'http://127.0.0.1:4416'
         }
     }
+    if "youtube" not in link:
+        options['external_downloader'] = "aria2c"
+        options['external_downloader_args'] = {
+            'aria2c': [
+                '-s16', 
+                '-x16', 
+                '-k1M', 
+                '--file-allocation=none'
+            ]
+        }
     
     if opt:
         yt_opt = opt.split("|")
