@@ -16,7 +16,7 @@ class GPhoto:
             '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.heic', '.heif',
             '.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm'
         }
-        # 修正后的 BASE_URL
+        # 确认使用 /3
         self.BASE_URL = "https://photos.google.com/photo/"
 
     async def _execute(self, cmd):
@@ -32,14 +32,13 @@ class GPhoto:
         stderr_str = stderr.decode().strip()
         
         if process.returncode != 0:
-            LOGGER.error(f"GPhoto 命令报错: {stderr_str}")
+            LOGGER.error(f"GPhoto 命令执行报错: {stderr_str}")
             return False, stderr_str
         return True, stdout_str
 
     def _extract_link(self, output):
-        """精准提取 mediakey，兼容大小写，确保返回纯净 URL"""
+        """精准提取 mediakey，大小写全兼容"""
         try:
-            # 使用正则匹配 JSON 内容
             match = re.search(r'\{.*\}', output, re.DOTALL)
             if not match:
                 LOGGER.error("GPhoto: 输出中未找到 JSON 内容")
@@ -49,14 +48,13 @@ class GPhoto:
             if "results" in data and len(data["results"]) > 0:
                 res = data["results"][0]
                 
-                # --- 大小写全兼容处理 ---
+                # 大小写全兼容处理
                 lowered_res = {k.lower(): v for k, v in res.items()}
                 m_key = lowered_res.get("mediakey")
                 success_flag = res.get("success") or lowered_res.get("success")
                 
                 if success_flag and m_key:
                     base = self.BASE_URL.rstrip('/')
-                    # 清洗 Key 中的空格或换行
                     final_link = f"{base}/{m_key.strip()}".strip()
                     LOGGER.info(f"GPhoto 成功解析链接: {final_link}")
                     return final_link
@@ -75,18 +73,26 @@ class GPhoto:
         path = Path(file_path)
         upload_path, is_converted = str(file_path), False
 
-        # 1. 授权查询逻辑：执行 gotohp creds list 并显示激活用户
+        # 1. 智能授权逻辑
         success_list, out_list = await self._execute("gotohp creds list")
+        active_user = None
         if success_list:
-            active_user = "未找到激活账号"
-            # 寻找带 * 的行，例如: * playingapi@gmail.com
             for line in out_list.split('\n'):
-                if '*' in line and '@' in line:
+                if '*' in line: # 寻找激活标记
                     active_user = line.replace('*', '').strip()
                     break
-            LOGGER.info(f"GPhoto: 当前验证的用户: {active_user}")
+        
+        if active_user:
+            LOGGER.info(f"GPhoto: 当前已有激活用户 [{active_user}]，跳过授权。")
+        elif self.api_key:
+            LOGGER.info("GPhoto: 未发现认证用户，正在执行 gotohp creds add...")
+            # 只有没有认证用户时才调用 add
+            auth_ok, auth_err = await self._execute(f"gotohp creds add '{self.api_key}'")
+            if not auth_ok:
+                LOGGER.error(f"GPhoto 自动授权失败: {auth_err}")
+                return None
         else:
-            LOGGER.warn(f"GPhoto: 无法获取授权列表。")
+            LOGGER.warn("GPhoto: 无认证用户且未配置 API Key，上传可能失败。")
 
         # 2. 预处理 (gpd hide)
         if path.suffix.lower() not in self.MEDIA_EXTS:
@@ -97,10 +103,10 @@ class GPhoto:
             if success:
                 upload_path = f"{file_path}.bmp" if filesize < self.SIZE_LIMIT else f"{file_path}.mp4"
                 is_converted = True
-                LOGGER.info(f"GPhoto: 转换完成，上传路径: {upload_path}")
+                LOGGER.info(f"GPhoto: 转换完成，新路径: {upload_path}")
 
         # 3. 调用上传 (gotohp)
-        LOGGER.info(f"GPhoto: 启动 gotohp 上传任务...")
+        LOGGER.info(f"GPhoto: 准备调用 gotohp upload 上传任务...")
         success_up, output_up = await self._execute(f"gotohp upload '{upload_path}' -r -d -t 5")
         
         if success_up:
@@ -111,7 +117,7 @@ class GPhoto:
                     self.dluploader._DDLUploader__processed_bytes += os.path.getsize(file_path)
                 except: pass
                 
-                # 成功后清理最初原件 (如果转换过)
+                # 成功后清理最初原件
                 if is_converted and os.path.exists(file_path):
                     try: os.remove(file_path)
                     except: pass
@@ -127,14 +133,14 @@ class GPhoto:
 
     async def upload(self, path):
         """入口方法：处理文件或文件夹"""
-        LOGGER.info(f"GPhoto 任务启动，处理路径: {path}")
+        LOGGER.info(f"GPhoto 任务启动，路径: {path}")
         
         if await aiopath.isfile(path):
             result = await self.upload_file(path)
             if result and str(result).startswith("http"):
                 return result
-            # 抛出异常防止引擎生成无效的 Telegram 按钮链接
-            raise Exception("GPhoto 上传失败或无法解析链接，请检查日志。")
+            # 抛出异常防止生成无效的 Telegram 按钮
+            raise Exception("GPhoto 上传失败或无法解析链接，详情请查看日志。")
         
         # 文件夹递归处理
         links = []
