@@ -121,6 +121,10 @@ desp_dict = {
         "Streamtape is free Video Streaming & sharing Hoster",
         "Send StreamTape's Login and Key\n<b>Format:</b> <code>user_login:pass_key</code>\n<b>Timeout:</b> 60 sec",
     ],
+    "gphoto": [
+        "GPhoto 上传服务，将文件存入 Google Photos。", 
+        "发送 GPhoto 的 API Key。<b>超时:</br> 60秒",
+    ],
     "lmeta": [
         "Your Channel Name that will be used while editing metadata of the Video File",
         "Send Metadata Text for Leeching Files.\n<b>Timeout:</b> 60 Sec.",
@@ -145,6 +149,7 @@ fname_dict = {
     "user_tds": "User Custom TDs",
     "gofile": "GoFile",
     "streamtape": "StreamTape",
+    "gphoto": "GPhoto",
 }
 
 
@@ -476,7 +481,7 @@ async def get_user_settings(from_user, key=None, edit_type=None, edit_mode=None)
             f"➲ <b>Enabled DDL Server(s) :</b> <i>{ddl_serv}</i>\n\n"
             f"➲ <b>Description :</b> <i>{desp_dict[key][0]}</i>"
         )
-        for btn in ["gofile", "streamtape"]:
+        for btn in ["gofile", "streamtape", "gphoto"]:
             buttons.ibutton(
                 f"{'✅️' if btn in serv_list else ''} {fname_dict[btn]}",
                 f"userset {user_id} {btn}",
@@ -565,7 +570,7 @@ async def get_user_settings(from_user, key=None, edit_type=None, edit_mode=None)
                 else val
             )
             text += f"➲ <b>Mirror Filename {fname_dict[key]} :</b> {set_exist}\n\n"
-        elif key in ["gofile", "streamtape"]:
+        elif key in ["gofile", "streamtape", "gphoto"]:
             set_exist = (
                 "Exists"
                 if key in (ddl_dict := user_dict.get("ddl_servers", {}))
@@ -714,7 +719,7 @@ async def set_custom(client, message, pre_event, key, direct=False):
     return_key = "leech"
     n_key = key
     user_dict = user_data.get(user_id, {})
-    if key in ["gofile", "streamtape"]:
+    if key in ["gofile", "streamtape", "gphoto"]:
         ddl_dict = user_dict.get("ddl_servers", {})
         mode, api = ddl_dict.get(key, [False, ""])
         if key == "gofile" and not await Gofile.is_goapi(value):
@@ -1022,7 +1027,7 @@ async def edit_user_settings(client, query):
         await update_user_settings(query, "leech")
         if DATABASE_URL:
             await DbManger().update_user_data(user_id)
-    elif data[2] in ["sgofile", "sstreamtape", "dgofile", "dstreamtape"]:
+    elif data[2] in ["sgofile", "sstreamtape", "sgphoto", "dgofile", "dstreamtape", "dgphoto"]:
         handler_dict[user_id] = False
         ddl_dict = user_dict.get("ddl_servers", {})
         key = data[2][1:]
@@ -1061,7 +1066,7 @@ async def edit_user_settings(client, query):
         else:
             await query.answer("Old Settings", show_alert=True)
             await update_user_settings(query)
-    elif data[2] in ["ddl_servers", "user_tds", "gofile", "streamtape"]:
+    elif data[2] in ["ddl_servers", "user_tds", "gofile", "streamtape", "gphoto"]:
         handler_dict[user_id] = False
         await query.answer()
         edit_mode = len(data) == 4
